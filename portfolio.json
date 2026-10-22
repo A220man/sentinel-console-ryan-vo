@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "name": "sentinel-console-ryan-vo",
+  "owner": "A220man",
+  "email": "ryandtvo@gmail.com",
+  "domain": "AI/ML developer tools",
+  "summary": "Work in progress: sentinel-console-ryan-vo",
+  "workflows": [
+    "Track and classify GitHub issues with AI-powered categorization and duplicate detection",
+    "Monitor API usage and costs across multiple LLM providers with trend analysis",
+    "Switch between multiple AI provider accounts with isolated configurations",
+    "Configure terminal accessibility settings to prevent screen flickering and support screen readers"
+  ],
+  "auth": "oidc-keycloak-saml-broker",
+  "llm_providers": [
+    "openai-compatible",
+    "anthropic",
+    "gemini",
+    "ollama"
+  ],
+  "status": "work-in-progress"
+}
