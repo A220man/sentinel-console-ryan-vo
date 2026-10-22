@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "current_feature": "project-skeleton",
+  "features": [
+    {
+      "id": "project-skeleton",
+      "title": "Project skeleton with FastAPI backend and React frontend",
+      "status": "done",
+      "acceptance": [
+        "FastAPI app runs on localhost:8000 with /health endpoint",
+        "React + TypeScript + Vite frontend builds and serves on localhost:5173",
+        "Docker Compose with backend, frontend, and Keycloak services",
+        "SQLite persistence with SQLAlchemy models",
+        "Basic OIDC authentication flow with Keycloak"
+      ],
+      "implementation": [
+        "backend/app/main.py",
+        "backend/app/core/config.py",
+        "backend/app/core/database.py",
+        "backend/app/models/__init__.py",
+        "backend/app/api/__init__.py",
+        "backend/requirements.txt",
+        "frontend/package.json",
+        "frontend/src/main.tsx",
+        "frontend/src/App.tsx",
+        "frontend/src/api/client.ts",
+        "compose.yaml",
+        "Dockerfile.backend",
+        "Dockerfile.frontend",
+        ".env.example"
+      ],
+      "tests": [
+        "backend/tests/test_api.py",
+        "frontend/src/__tests__/App.test.tsx"
+      ]
+    },
+    {
+      "id": "issue-tracking",
+      "title": "Issue tracking domain engine with AI/ML classification",
+      "status": "planned",
+      "acceptance": [
+        "Create, list, search, filter issues with pagination",
+        "AI-powered issue classification (bug/feature/enhancement) using LLM",
+        "Issue similarity detection to find duplicates",
+        "Priority scoring based on keywords, comments, engagement"
+      ],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "usage-analytics",
+      "title": "Usage analytics dashboard with limit monitoring",
+      "status": "planned",
+      "acceptance": [
+        "Track API usage over time with persistent storage",
+        "Visual dashboard showing usage trends",
+        "Alert when approaching subscription limits",
+        "Export usage data as CSV/JSON"
+      ],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "multi-account",
+      "title": "Multi-account profile management",
+      "status": "planned",
+      "acceptance": [
+        "Add/switch between multiple Claude accounts",
+        "Separate conversation history per account",
+        "Distinct MCP server configurations per profile",
+        "Visual account indicator in UI"
+      ],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "accessibility-fixes",
+      "title": "Terminal accessibility improvements (anti-flicker)",
+      "status": "planned",
+      "acceptance": [
+        "In-place status updates without full buffer redraw",
+        "Screen reader compatible status announcements",
+        "Reduced motion mode for animations",
+        "High contrast theme option"
+      ],
+      "implementation": [],
+      "tests": []
+    }
+  ]
+}
