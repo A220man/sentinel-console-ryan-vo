@@ -25,13 +25,17 @@ Tests: `backend/tests/test_api.py`, `frontend/src/__tests__/App.test.tsx`
 
 ### issue-tracking — Issue tracking domain engine with AI/ML classification
 
-Status: planned
+Status: in_progress
 
 Acceptance:
 - Create, list, search, filter issues with pagination
 - AI-powered issue classification (bug/feature/enhancement) using LLM
 - Issue similarity detection to find duplicates
 - Priority scoring based on keywords, comments, engagement
+
+Implementation: `backend/app/services/classifier.py`, `backend/app/services/__init__.py`, `backend/app/api/__init__.py`, `backend/app/models/__init__.py`, `frontend/src/api/client.ts`, `frontend/src/hooks/useApi.ts`, `frontend/src/pages/Issues.tsx`, `frontend/src/types/index.ts`
+
+Tests: `backend/tests/test_api.py`
 
 ### usage-analytics — Usage analytics dashboard with limit monitoring
 

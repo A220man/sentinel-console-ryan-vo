@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.0.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
@@ -43,9 +47,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- AI/ML issue classification service with keyword-based fallback (works offline)
+- Optional LLM-enhanced classification (advisory, opt-in via LLM_API_KEY)
+- Semantic similarity hashing for duplicate issue detection
+- Auto-classification on issue create/update when type/priority not explicitly provided
+- Similar issues endpoint (`GET /api/issues/{id}/similar`)
+- Frontend: Classification confidence display in issues table
+- Frontend: "View Similar Issues" modal with AI confidence indicators
+- Frontend: useSimilarIssues hook for reactive similar issues loading
+
 ### Planned
-- Real LLM integration for issue classification
-- Semantic similarity with embeddings
+- Real LLM integration for issue classification (enhancement)
+- Semantic similarity with embeddings (upgrade from hash-based)
 - WebSocket live updates
 - Full OIDC authentication flow
 - Audit logging

@@ -11,6 +11,7 @@ from app.models import (
     Issue, IssueType, IssuePriority, IssueStatus,
     UsageRecord, UserProfile, AccountProfile, AccessibilitySettings
 )
+from app.services.classifier import classify_issue, find_similar_issues
 
 router = APIRouter()
 settings = get_settings()
@@ -99,14 +100,38 @@ async def create_issue(
     if existing:
         raise HTTPException(status_code=409, detail="Issue with this external_id already exists")
 
+    # Auto-classify if not explicitly provided
+    explicit_type = "issue_type" in issue_data
+    explicit_priority = "priority" in issue_data
+    title = issue_data["title"]
+    body = issue_data.get("body", "")
+
+    if not explicit_type or not explicit_priority:
+        classification = await classify_issue(title, body)
+        if not explicit_type:
+            issue_type = classification.issue_type.value
+        else:
+            issue_type = issue_data["issue_type"]
+        if not explicit_priority:
+            priority = classification.priority.value
+        else:
+            priority = issue_data["priority"]
+        confidence = classification.confidence
+        similarity_hash = classification.similarity_hash
+    else:
+        issue_type = issue_data["issue_type"]
+        priority = issue_data["priority"]
+        confidence = 1.0
+        similarity_hash = _generate_similarity_hash_local(title, body)
+
     issue = Issue(
         external_id=issue_data["external_id"],
         number=issue_data["number"],
         title=issue_data["title"],
         body=issue_data.get("body"),
         html_url=issue_data.get("html_url"),
-        issue_type=issue_data.get("issue_type", IssueType.QUESTION.value),
-        priority=issue_data.get("priority", IssuePriority.MEDIUM.value),
+        issue_type=issue_type,
+        priority=priority,
         status=issue_data.get("status", IssueStatus.OPEN.value),
         comments_count=issue_data.get("comments_count", 0),
         labels=json.dumps(issue_data.get("labels", [])),
@@ -114,12 +139,49 @@ async def create_issue(
         author=issue_data.get("author"),
         created_at=datetime.fromisoformat(issue_data["created_at"]) if issue_data.get("created_at") else datetime.utcnow(),
         updated_at=datetime.fromisoformat(issue_data["updated_at"]) if issue_data.get("updated_at") else datetime.utcnow(),
+        classification_confidence=confidence,
+        classified_at=datetime.utcnow(),
+        similarity_hash=similarity_hash,
+        priority_score=confidence,  # Use confidence as priority score proxy
     )
 
     db.add(issue)
     db.commit()
     db.refresh(issue)
-    return issue.to_dict()
+
+    # Find similar issues
+    existing_hashes = db.query(Issue.id, Issue.similarity_hash).filter(
+        Issue.similarity_hash.isnot(None), Issue.id != issue.id
+    ).all()
+    similar_ids = find_similar_issues(similarity_hash, existing_hashes)
+
+    result = issue.to_dict()
+    result["similar_issues"] = similar_ids
+    return result
+
+def _generate_similarity_hash_local(title: str, body: str) -> str:
+    """Local copy of similarity hash generation for explicit classification."""
+    import hashlib
+    import re
+    normalized = re.sub(r"[^\w\s]", "", f"{title} {body}".lower())
+    words = normalized.split()
+    stop_words = {
+        "the", "and", "for", "are", "but", "not", "you", "all", "can", "had",
+        "her", "was", "one", "our", "out", "day", "get", "has", "him", "his",
+        "how", "its", "may", "new", "now", "old", "see", "two", "who", "boy",
+        "did", "she", "use", "way", "will", "with", "from", "they", "this",
+        "that", "have", "been", "were", "said", "each", "which", "their",
+        "would", "there", "what", "about", "when", "make", "like", "time",
+        "just", "know", "take", "into", "your", "good", "some", "could",
+        "them", "then", "than", "look", "only", "come", "over", "think",
+        "also", "back", "after", "first", "well", "even", "want", "because",
+        "any", "these", "give", "most", "very", "through", "where", "much",
+        "before", "should", "too", "more", "such", "why", "each", "between",
+    }
+    significant = [w for w in words if len(w) > 3 and w not in stop_words]
+    features = sorted(set(significant))[:20]
+    feature_str = "|".join(features)
+    return hashlib.sha256(feature_str.encode()).hexdigest()[:16]
 
 
 @router.patch("/issues/{issue_id}", response_model=dict)
@@ -128,6 +190,12 @@ async def update_issue(issue_id: int, updates: dict, db: Session = Depends(get_d
     if not issue:
         raise HTTPException(status_code=404, detail="Issue not found")
 
+    # Check if title or body changed and we need to re-classify
+    title_changed = "title" in updates and updates["title"] != issue.title
+    body_changed = "body" in updates and updates.get("body") != issue.body
+    explicit_type = "issue_type" in updates
+    explicit_priority = "priority" in updates
+
     allowed_fields = ["title", "body", "issue_type", "priority", "status", "comments_count", "labels", "assignees"]
     for field, value in updates.items():
         if field in allowed_fields:
@@ -135,6 +203,20 @@ async def update_issue(issue_id: int, updates: dict, db: Session = Depends(get_d
                 setattr(issue, field, json.dumps(value))
             else:
                 setattr(issue, field, value)
+
+    # Re-classify if title/body changed and type/priority not explicitly set
+    if (title_changed or body_changed) and (not explicit_type or not explicit_priority):
+        new_title = updates.get("title", issue.title)
+        new_body = updates.get("body", issue.body)
+        classification = await classify_issue(new_title, new_body)
+        if not explicit_type:
+            issue.issue_type = classification.issue_type.value
+        if not explicit_priority:
+            issue.priority = classification.priority.value
+        issue.classification_confidence = classification.confidence
+        issue.classified_at = datetime.utcnow()
+        issue.similarity_hash = classification.similarity_hash
+        issue.priority_score = classification.confidence
 
     issue.updated_at = datetime.utcnow()
     if updates.get("status") in (IssueStatus.RESOLVED.value, IssueStatus.CLOSED.value) and not issue.closed_at:
@@ -157,6 +239,29 @@ async def issues_summary(db: Session = Depends(get_db)):
         "by_type": {t: c for t, c in by_type},
         "by_priority": {p: c for p, c in by_priority},
         "by_status": {s: c for s, c in by_status},
+    }
+
+
+@router.get("/issues/{issue_id}/similar", response_model=dict)
+async def find_similar_issues_endpoint(issue_id: int, db: Session = Depends(get_db)):
+    """Find issues similar to the given issue using semantic similarity hash."""
+    issue = db.query(Issue).filter(Issue.id == issue_id).first()
+    if not issue:
+        raise HTTPException(status_code=404, detail="Issue not found")
+
+    if not issue.similarity_hash:
+        return {"similar_issues": [], "count": 0}
+
+    existing_hashes = db.query(Issue.id, Issue.similarity_hash).filter(
+        Issue.similarity_hash.isnot(None), Issue.id != issue_id
+    ).all()
+    similar_ids = find_similar_issues(issue.similarity_hash, existing_hashes)
+
+    similar_issues = db.query(Issue).filter(Issue.id.in_(similar_ids)).all() if similar_ids else []
+
+    return {
+        "similar_issues": [si.to_dict() for si in similar_issues],
+        "count": len(similar_issues),
     }
 
 

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Search, Filter, ChevronDown, ChevronUp, Plus, Download } from 'lucide-react'
+import { Search, Filter, ChevronDown, ChevronUp, Plus, Download, AlertCircle, Eye } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui'
 import { Button } from '../components/ui'
 import { Input } from '../components/ui'
@@ -7,7 +7,7 @@ import { Select, Option } from '../components/ui'
 import { Badge } from '../components/ui'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui'
 import { Modal } from '../components/ui'
-import { useIssues, useIssuesSummary, useCreateIssue, useUpdateIssue } from '../hooks/useApi'
+import { useIssues, useIssuesSummary, useCreateIssue, useUpdateIssue, useSimilarIssues } from '../hooks/useApi'
 import type { Issue, IssueType, IssuePriority, IssueStatus } from '../types'
 import { format } from 'date-fns'
 
@@ -65,6 +65,8 @@ export function Issues() {
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editingIssue, setEditingIssue] = useState<Issue | null>(null)
+  const [similarModalOpen, setSimilarModalOpen] = useState(false)
+  const [similarIssue, setSimilarIssue] = useState<Issue | null>(null)
   const [formData, setFormData] = useState({
     external_id: '',
     number: '',
@@ -89,6 +91,7 @@ export function Issues() {
   const { data: summary } = useIssuesSummary()
   const { create, loading: createLoading } = useCreateIssue()
   const { update, loading: updateLoading } = useUpdateIssue()
+  const { data: similarData, loading: similarLoading, error: similarError, refetch: refetchSimilar } = useSimilarIssues(similarIssue?.id || null)
 
   const handleSort = (column: typeof sortBy) => {
     if (sortBy === column) {
@@ -323,6 +326,7 @@ export function Issues() {
                       Updated {sortBy === 'updated_at' ? (sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />) : ''}
                     </button>
                   </TableHead>
+                  <TableHead>Confidence</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -350,15 +354,35 @@ export function Issues() {
                     <TableCell className="text-gray-500 dark:text-gray-400">
                       {issue.updated_at ? format(new Date(issue.updated_at), 'MMM d, yyyy') : '—'}
                     </TableCell>
+                    <TableCell>
+                      {issue.classification_confidence > 0 && (
+                        <div className="flex items-center gap-1 text-sm">
+                          <AlertCircle className="h-3.5 w-3.5 text-gray-400" />
+                          <span className="font-mono">
+                            {(issue.classification_confidence * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditModal(issue)}
-                        aria-label={`Edit issue #${issue.number}`}
-                      >
-                        Edit
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => { setSimilarIssue(issue); setSimilarModalOpen(true); refetchSimilar(); }}
+                          aria-label={`View similar issues for #${issue.number}`}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditModal(issue)}
+                          aria-label={`Edit issue #${issue.number}`}
+                        >
+                          Edit
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
