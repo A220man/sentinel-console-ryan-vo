@@ -37,15 +37,26 @@
     {
       "id": "issue-tracking",
       "title": "Issue tracking domain engine with AI/ML classification",
-      "status": "planned",
+      "status": "in_progress",
       "acceptance": [
         "Create, list, search, filter issues with pagination",
         "AI-powered issue classification (bug/feature/enhancement) using LLM",
         "Issue similarity detection to find duplicates",
         "Priority scoring based on keywords, comments, engagement"
       ],
-      "implementation": [],
-      "tests": []
+      "implementation": [
+        "backend/app/services/classifier.py",
+        "backend/app/services/__init__.py",
+        "backend/app/api/__init__.py",
+        "backend/app/models/__init__.py",
+        "frontend/src/api/client.ts",
+        "frontend/src/hooks/useApi.ts",
+        "frontend/src/pages/Issues.tsx",
+        "frontend/src/types/index.ts"
+      ],
+      "tests": [
+        "backend/tests/test_api.py"
+      ]
     },
     {
       "id": "usage-analytics",

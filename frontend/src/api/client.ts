@@ -74,6 +74,11 @@ class ApiClient {
     return response.data
   }
 
+  async getSimilarIssues(issueId: number) {
+    const response = await this.client.get(`/issues/${issueId}/similar`)
+    return response.data
+  }
+
   // Usage
   async getUsage(params?: {
     page?: number

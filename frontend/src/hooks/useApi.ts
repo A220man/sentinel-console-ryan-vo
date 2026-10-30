@@ -66,6 +66,13 @@ export function useIssuesSummary() {
   return useApiCall<IssuesSummary>(() => api.getIssuesSummary(), [])
 }
 
+export function useSimilarIssues(issueId: number | null) {
+  return useApiCall<{ similar_issues: Issue[]; count: number }>(
+    () => api.getSimilarIssues(issueId!),
+    [issueId]
+  )
+}
+
 export function useCreateIssue() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
