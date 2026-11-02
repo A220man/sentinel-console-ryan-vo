@@ -25,65 +25,141 @@ class ClassificationResult:
     reasoning: str
     similarity_hash: str
 
-
-# Keyword patterns for deterministic classification
+# Keyword patterns for deterministic classification with weights
+# Higher weight = stronger indicator
 BUG_KEYWORDS = [
-    r"\bbug\b", r"\berror\b", r"\bcrash\b", r"\bfail\b", r"\bbroken\b",
-    r"\bissue\b", r"\bproblem\b", r"\bdefect\b", r"\bfix\b", r"\bregress\b",
-    r"\bexception\b", r"\btraceback\b", r"\bpanic\b", r"\bhang\b", r"\bfreeze\b",
-    r"\bincorrect\b", r"\bwrong\b", r"\bunexpected\b", r"\bglitch\b",
+    (r"\bcrash\b", 3.0),
+    (r"\bexception\b", 2.5),
+    (r"\btraceback\b", 2.5),
+    (r"\bpanic\b", 2.5),
+    (r"\berror\b", 2.0),
+    (r"\bfail\b", 2.0),
+    (r"\bbroken\b", 2.0),
+    (r"\bdefect\b", 2.0),
+    (r"\bregress\b", 2.0),
+    (r"\bhang\b", 1.5),
+    (r"\bfreeze\b", 1.5),
+    (r"\bincorrect\b", 1.5),
+    (r"\bwrong\b", 1.5),
+    (r"\bunexpected\b", 1.5),
+    (r"\bglitch\b", 1.5),
+    (r"\bbug\b", 1.0),
+    (r"\bissue\b", 0.5),
+    (r"\bproblem\b", 0.5),
+    (r"\bfix\b", 0.5),
 ]
 
 FEATURE_KEYWORDS = [
-    r"\bfeature\b", r"\badd\b", r"\bnew\b", r"\bimplement\b", r"\bcreate\b",
-    r"\bsupport\b", r"\benable\b", r"\ballow\b", r"\bprovide\b", r"\bintroduce\b",
-    r"\brequest\b", r"\bpropose\b", r"\bsuggest\b", r"\bideas?\b", r"\benhancement\b",
+    (r"\bimplement\b", 2.0),
+    (r"\bcreate\b", 2.0),
+    (r"\bintroduce\b", 2.0),
+    (r"\bfeature\b", 1.5),
+    (r"\badd\b", 1.5),
+    (r"\bnew\b", 1.5),
+    (r"\bsupport\b", 1.5),
+    (r"\benable\b", 1.5),
+    (r"\ballow\b", 1.5),
+    (r"\bprovide\b", 1.5),
+    (r"\brequest\b", 1.0),
+    (r"\bpropose\b", 1.0),
+    (r"\bsuggest\b", 1.0),
+    (r"\bideas?\b", 1.0),
+    (r"\benhancement\b", 1.0),
 ]
 
 ENHANCEMENT_KEYWORDS = [
-    r"\benhance\b", r"\bimprove\b", r"\boptimize\b", r"\brefactor\b", r"\bupgrade\b",
-    r"\bmodernize\b", r"\bperformance\b", r"\bspeed\b", r"\bfaster\b", r"\bbetter\b",
-    r"\bclean\b", r"\bpolish\b", r"\btweak\b", r"\badjust\b", r"\bupdate\b",
+    (r"\boptimize\b", 2.5),
+    (r"\brefactor\b", 2.5),
+    (r"\bmodernize\b", 2.0),
+    (r"\bupgrade\b", 2.0),
+    (r"\benhance\b", 1.5),
+    (r"\bimprove\b", 1.5),
+    (r"\bperformance\b", 1.5),
+    (r"\bspeed\b", 1.5),
+    (r"\bfaster\b", 1.5),
+    (r"\bbetter\b", 1.5),
+    (r"\bclean\b", 1.0),
+    (r"\bpolish\b", 1.0),
+    (r"\btweak\b", 1.0),
+    (r"\badjust\b", 1.0),
+    (r"\bupdate\b", 1.0),
 ]
 
 QUESTION_KEYWORDS = [
-    r"\bhow\b", r"\bwhat\b", r"\bwhy\b", r"\bwhen\b", r"\bwhere\b", r"\bwhich\b",
-    r"\bcan\s+i\b", r"\bhow\s+to\b", r"\bis\s+it\b", r"\bdoes\b", r"\bhelp\b",
-    r"\bquestion\b", r"\bquery\b", r"\bwonder\b", r"\bconfus\b", r"\bclarify\b",
+    (r"\bhow\s+to\b", 2.5),
+    (r"\bcan\s+i\b", 2.0),
+    (r"\bis\s+it\b", 2.0),
+    (r"\bhow\b", 1.5),
+    (r"\bwhat\b", 1.5),
+    (r"\bwhy\b", 1.5),
+    (r"\bwhen\b", 1.0),
+    (r"\bwhere\b", 1.0),
+    (r"\bwhich\b", 1.0),
+    (r"\bdoes\b", 1.0),
+    (r"\bhelp\b", 1.0),
+    (r"\bquestion\b", 1.0),
+    (r"\bquery\b", 1.0),
+    (r"\bwonder\b", 1.0),
+    (r"\bconfus\b", 1.0),
+    (r"\bclarify\b", 1.0),
 ]
 
 PRIORITY_KEYWORDS = {
     IssuePriority.CRITICAL: [
-        r"\bcritical\b", r"\burgent\b", r"\bemergency\b", r"\bsevere\b", r"\bblocker\b",
-        r"\bproduction\s+down\b", r"\bdata\s+loss\b", r"\bsecurity\b", r"\bvulnerab\b",
+        (r"\bproduction\s+down\b", 3.0),
+        (r"\bdata\s+loss\b", 3.0),
+        (r"\bsecurity\b", 3.0),
+        (r"\bvulnerab\b", 3.0),
+        (r"\bcritical\b", 2.5),
+        (r"\burgent\b", 2.5),
+        (r"\bemergency\b", 2.5),
+        (r"\bsevere\b", 2.0),
+        (r"\bblocker\b", 2.0),
     ],
     IssuePriority.HIGH: [
-        r"\bhigh\b", r"\bimportant\b", r"\bmajor\b", r"\bbreaking\b", r"\bpriority\b",
-        r"\basap\b", r"\bsoon\b", r"\bdeadline\b", r"\brelease\s+block\b",
+        (r"\bbreaking\b", 2.5),
+        (r"\brelease\s+block\b", 2.5),
+        (r"\bhigh\b", 2.0),
+        (r"\bimportant\b", 2.0),
+        (r"\bmajor\b", 2.0),
+        (r"\bpriority\b", 1.5),
+        (r"\basap\b", 1.5),
+        (r"\bsoon\b", 1.0),
+        (r"\bdeadline\b", 1.0),
     ],
     IssuePriority.MEDIUM: [
-        r"\bmedium\b", r"\bnormal\b", r"\bstandard\b", r"\btypical\b",
+        (r"\bmedium\b", 1.5),
+        (r"\bnormal\b", 1.0),
+        (r"\bstandard\b", 1.0),
+        (r"\btypical\b", 1.0),
     ],
     IssuePriority.LOW: [
-        r"\blow\b", r"\bminor\b", r"\btrivial\b", r"\bcosmetic\b", r"\bnice\s+to\s+have\b",
-        r"\bwhen\s+time\b", r"\bbacklog\b", r"\bsomeday\b",
+        (r"\bcosmetic\b", 2.0),
+        (r"\btrivial\b", 1.5),
+        (r"\bminor\b", 1.5),
+        (r"\blow\b", 1.0),
+        (r"\bnice\s+to\s+have\b", 1.0),
+        (r"\bwhen\s+time\b", 1.0),
+        (r"\bbacklog\b", 1.0),
+        (r"\bsomeday\b", 1.0),
     ],
 }
 
 
-def _count_matches(text: str, patterns: list[str]) -> int:
-    """Count keyword pattern matches in text (case-insensitive)."""
-    count = 0
-    for pattern in patterns:
-        count += len(re.findall(pattern, text, re.IGNORECASE))
-    return count
+def _count_matches(text: str, patterns: list[tuple[str, float]]) -> float:
+    """Sum weighted keyword pattern matches in text (case-insensitive)."""
+    total = 0.0
+    for pattern, weight in patterns:
+        matches = len(re.findall(pattern, text, re.IGNORECASE))
+        total += matches * weight
+    return total
 
 
 def _classify_by_keywords(title: str, body: str) -> tuple[IssueType, IssuePriority, float, str]:
     """Classify issue using keyword matching (deterministic fallback)."""
     combined = f"{title} {body}".lower()
 
-    # Count matches for each type
+    # Count weighted matches for each type
     bug_score = _count_matches(combined, BUG_KEYWORDS)
     feature_score = _count_matches(combined, FEATURE_KEYWORDS)
     enhancement_score = _count_matches(combined, ENHANCEMENT_KEYWORDS)
@@ -97,20 +173,27 @@ def _classify_by_keywords(title: str, body: str) -> tuple[IssueType, IssuePriori
         IssueType.QUESTION: question_score,
     }
     issue_type = max(scores, key=scores.get)
-    type_confidence = min(scores[issue_type] / max(1, sum(scores.values())), 1.0)
+    type_confidence = min(scores[issue_type] / max(1.0, sum(scores.values())), 1.0)
 
     # Determine priority
     priority_scores = {}
     for priority, patterns in PRIORITY_KEYWORDS.items():
         priority_scores[priority] = _count_matches(combined, patterns)
-    priority = max(priority_scores, key=priority_scores.get)
-    priority_confidence = min(priority_scores[priority] / max(1, sum(priority_scores.values())), 1.0)
+    
+    # Default to MEDIUM if no priority keywords match
+    max_score = max(priority_scores.values())
+    if max_score > 0:
+        priority = max(priority_scores, key=priority_scores.get)
+        priority_confidence = min(priority_scores[priority] / max(1.0, sum(priority_scores.values())), 1.0)
+    else:
+        priority = IssuePriority.MEDIUM
+        priority_confidence = 0.5
 
     # Overall confidence (weighted)
     confidence = (type_confidence * 0.7) + (priority_confidence * 0.3)
 
     # Reasoning
-    reasoning = f"Keyword-based: {issue_type.value} (score: {scores[issue_type]}), {priority.value} priority (score: {priority_scores[priority]})"
+    reasoning = f"Keyword-based: {issue_type.value} (score: {scores[issue_type]:.1f}), {priority.value} priority (score: {priority_scores[priority]:.1f})"
 
     return issue_type, priority, confidence, reasoning
 
