@@ -4,7 +4,7 @@ Each round completes one feature or repair. Future items are planned, not implem
 
 ## Current round
 
-project-skeleton
+issue-tracking
 
 ## Roadmap
 
@@ -25,7 +25,7 @@ Tests: `backend/tests/test_api.py`, `frontend/src/__tests__/App.test.tsx`
 
 ### issue-tracking — Issue tracking domain engine with AI/ML classification
 
-Status: in_progress
+Status: done
 
 Acceptance:
 - Create, list, search, filter issues with pagination
@@ -35,7 +35,7 @@ Acceptance:
 
 Implementation: `backend/app/services/classifier.py`, `backend/app/services/__init__.py`, `backend/app/api/__init__.py`, `backend/app/models/__init__.py`, `frontend/src/api/client.ts`, `frontend/src/hooks/useApi.ts`, `frontend/src/pages/Issues.tsx`, `frontend/src/types/index.ts`
 
-Tests: `backend/tests/test_api.py`
+Tests: `backend/tests/test_api.py`, `backend/tests/test_classifier.py`
 
 ### usage-analytics — Usage analytics dashboard with limit monitoring
 

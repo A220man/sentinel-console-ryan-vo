@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { ExternalLink, Hash, Copy } from 'lucide-react'
 import { Search, Filter, ChevronDown, ChevronUp, Plus, Download, AlertCircle, Eye } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui'
 import { Button } from '../components/ui'
@@ -561,6 +562,91 @@ export function Issues() {
             </Button>
           </div>
         </form>
+      </Modal>
+      {/* Similar Issues Modal */}
+      <Modal
+        isOpen={similarModalOpen}
+        onClose={() => { setSimilarModalOpen(false); setSimilarIssue(null); }}
+        title="Similar Issues"
+        size="lg"
+      >
+        {similarLoading ? (
+          <div className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sentinel-600 mx-auto" />
+            <p className="mt-4 text-gray-500 dark:text-gray-400">Finding similar issues...</p>
+          </div>
+        ) : similarError ? (
+          <div className="p-8 text-center text-red-600 dark:text-red-400">
+            <p>Error loading similar issues: {similarError}</p>
+            <Button variant="outline" onClick={refetchSimilar} className="mt-2">
+              Retry
+            </Button>
+          </div>
+        ) : similarData?.similar_issues?.length === 0 ? (
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+            <p>No similar issues found.</p>
+            <p className="text-sm mt-1">Try adjusting the similarity threshold or create a new issue.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Found {similarData?.count || 0} similar issue(s) for <strong>#{similarIssue?.number}</strong>: {similarIssue?.title}
+            </p>
+            <div className="max-h-[400px] overflow-y-auto space-y-3">
+              {similarData?.similar_issues?.map((simIssue) => (
+                <div
+                  key={simIssue.id}
+                  className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-sentinel-500 dark:hover:border-sentinel-500 transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-mono text-gray-500 dark:text-gray-400">#{simIssue.number}</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{simIssue.title}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                        <Badge variant={TYPE_COLORS[simIssue.issue_type as IssueType] || 'default'}>{simIssue.issue_type}</Badge>
+                        <Badge variant={PRIORITY_COLORS[simIssue.priority as IssuePriority] || 'default'}>{simIssue.priority}</Badge>
+                        <Badge variant={STATUS_COLORS[simIssue.status as IssueStatus] || 'default'}>{simIssue.status.replace('_', ' ')}</Badge>
+                        {simIssue.classification_confidence > 0 && (
+                          <span className="flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {(simIssue.classification_confidence * 100).toFixed(0)}% confidence
+                          </span>
+                        )}
+                      </div>
+                      {simIssue.body && (
+                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{simIssue.body}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigator.clipboard.writeText(simIssue.html_url || `#${simIssue.number}`)}
+                        aria-label="Copy issue URL"
+                        title="Copy URL"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      {simIssue.html_url && (
+                        <a
+                          href={simIssue.html_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sentinel-600 hover:text-sentinel-800 dark:text-sentinel-400 dark:hover:text-sentinel-300"
+                          aria-label="View on GitHub"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   )

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_feature": "project-skeleton",
+  "current_feature": "issue-tracking",
   "features": [
     {
       "id": "project-skeleton",
@@ -37,7 +37,7 @@
     {
       "id": "issue-tracking",
       "title": "Issue tracking domain engine with AI/ML classification",
-      "status": "in_progress",
+      "status": "done",
       "acceptance": [
         "Create, list, search, filter issues with pagination",
         "AI-powered issue classification (bug/feature/enhancement) using LLM",
@@ -55,7 +55,8 @@
         "frontend/src/types/index.ts"
       ],
       "tests": [
-        "backend/tests/test_api.py"
+        "backend/tests/test_api.py",
+        "backend/tests/test_classifier.py"
       ]
     },
     {
