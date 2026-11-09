@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum as PyEnum
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Index, Boolean
 from sqlalchemy.orm import relationship, Mapped, mapped_column
@@ -43,8 +43,8 @@ class Issue(Base):
     labels: Mapped[str] = mapped_column(Text, nullable=True)  # JSON array
     assignees: Mapped[str] = mapped_column(Text, nullable=True)  # JSON array
     author: Mapped[str] = mapped_column(String(100), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     closed_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     # AI/ML fields
@@ -82,7 +82,7 @@ class UsageRecord(Base):
     __tablename__ = "usage_records"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     model: Mapped[str] = mapped_column(String(100), index=True)
     input_tokens: Mapped[int] = mapped_column(Integer, default=0)
     output_tokens: Mapped[int] = mapped_column(Integer, default=0)
@@ -114,8 +114,8 @@ class UserProfile(Base):
     avatar_url: Mapped[str] = mapped_column(String(500), nullable=True)
     active_profile_id: Mapped[int] = mapped_column(Integer, default=0)
     oidc_sub: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     last_login: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     profiles: Mapped[list["AccountProfile"]] = relationship(back_populates="user", cascade="all, delete-orphan")
@@ -149,8 +149,8 @@ class AccountProfile(Base):
     mcp_config: Mapped[str] = mapped_column(Text, nullable=True)  # JSON
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_default: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     user: Mapped["UserProfile"] = relationship(back_populates="profiles")
 
@@ -186,8 +186,8 @@ class AccessibilitySettings(Base):
     status_update_interval_ms: Mapped[int] = mapped_column(Integer, default=500)
     theme: Mapped[str] = mapped_column(String(50), default="system")  # light, dark, system
     font_size: Mapped[int] = mapped_column(Integer, default=14)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
         return {
