@@ -8,7 +8,7 @@ import { Select, Option } from '../components/ui'
 import { Badge } from '../components/ui'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui'
 import { Modal } from '../components/ui'
-import { useIssues, useIssuesSummary, useCreateIssue, useUpdateIssue, useSimilarIssues } from '../hooks/useApi'
+import { useIssues, useIssuesSummary, useCreateIssue, useUpdateIssue, useSimilarIssues, usePreviewClassification } from '../hooks/useApi'
 import type { Issue, IssueType, IssuePriority, IssueStatus } from '../types'
 import { format } from 'date-fns'
 
@@ -77,6 +77,7 @@ export function Issues() {
     priority: 'medium' as IssuePriority,
     status: 'open' as IssueStatus,
   })
+  const [showPreview, setShowPreview] = useState(false)
 
   const { data, loading, error, refetch } = useIssues({
     page,
@@ -93,6 +94,7 @@ export function Issues() {
   const { create, loading: createLoading } = useCreateIssue()
   const { update, loading: updateLoading } = useUpdateIssue()
   const { data: similarData, loading: similarLoading, error: similarError, refetch: refetchSimilar } = useSimilarIssues(similarIssue?.id || null)
+  const { data: previewData, loading: previewLoading, error: previewError, preview: previewClassification } = usePreviewClassification()
 
   const handleSort = (column: typeof sortBy) => {
     if (sortBy === column) {
@@ -491,6 +493,76 @@ export function Issues() {
               placeholder="Issue description (Markdown supported)"
             />
           </div>
+          
+          {/* Preview Classification Button */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              if (formData.title.trim()) {
+                previewClassification(formData.title, formData.body)
+                setShowPreview(true)
+              }
+            }}
+            disabled={!formData.title.trim() || previewLoading}
+            className="w-full"
+          >
+            {previewLoading ? 'Analyzing...' : 'Preview AI Classification'}
+          </Button>
+          
+          {/* Preview Result */}
+          {showPreview && previewData && (
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">AI Classification Preview</h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Type:</span>
+                  <span className="ml-2 font-medium capitalize">{previewData.issue_type}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Priority:</span>
+                  <span className="ml-2 font-medium capitalize">{previewData.priority}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Confidence:</span>
+                  <span className="ml-2 font-mono">{(previewData.confidence * 100).toFixed(0)}%</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Similarity Hash:</span>
+                  <span className="ml-2 font-mono text-xs">{previewData.similarity_hash}</span>
+                </div>
+              </div>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{previewData.reasoning}</p>
+              <div className="mt-3 flex gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, issue_type: previewData.issue_type as IssueType, priority: previewData.priority as IssuePriority }))
+                    setShowPreview(false)
+                  }}
+                >
+                  Apply Suggestion
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowPreview(false)}
+                >
+                  Dismiss
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          {previewError && (
+            <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+              {previewError}
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button type="button" variant="outline" onClick={() => setCreateModalOpen(false)}>
               Cancel

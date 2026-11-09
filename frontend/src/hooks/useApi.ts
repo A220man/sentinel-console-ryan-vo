@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '../api/client'
 import type {
+  ClassificationResult,
   Issue,
   PaginatedResponse,
   IssuesSummary,
@@ -71,6 +72,30 @@ export function useSimilarIssues(issueId: number | null) {
     () => api.getSimilarIssues(issueId!),
     [issueId]
   )
+}
+
+export function usePreviewClassification() {
+  const [data, setData] = useState<ClassificationResult | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const preview = useCallback(async (title: string, body: string = '') => {
+    setLoading(true)
+    setError(null)
+    try {
+      const result = await api.previewClassification(title, body)
+      setData(result)
+      return result
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to preview classification'
+      setError(message)
+      return null
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  return { data, loading, error, preview }
 }
 
 export function useCreateIssue() {

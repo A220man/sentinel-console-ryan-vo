@@ -2,6 +2,20 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, or_
 from typing import Optional, List
+from datetime import datetime, timedelta, timezone
+import json
+
+from app.core.database import get_db
+from app.core.config import get_settings
+from app.models import (
+    Issue, IssueType, IssuePriority, IssueStatus,
+    UsageRecord, UserProfile, AccountProfile, AccessibilitySettings
+)
+from app.services.classifier import classify_issue, find_similar_issues
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from sqlalchemy import desc, func, or_
+from typing import Optional, List
 from datetime import datetime, timedelta
 import json
 
@@ -12,6 +26,18 @@ from app.models import (
     UsageRecord, UserProfile, AccountProfile, AccessibilitySettings
 )
 from app.services.classifier import classify_issue, find_similar_issues
+from pydantic import BaseModel
+
+class ClassificationPreview(BaseModel):
+    title: str
+    body: str = ""
+
+class ClassificationResult(BaseModel):
+    issue_type: str
+    priority: str
+    confidence: float
+    reasoning: str
+    similarity_hash: str
 
 router = APIRouter()
 settings = get_settings()
@@ -24,8 +50,22 @@ async def health_check():
         "status": "healthy",
         "service": "sentinel-console",
         "version": settings.app_version,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
+
+
+# Classification preview endpoint
+@router.post("/issues/classify", response_model=ClassificationResult)
+async def preview_classification(preview: ClassificationPreview):
+    """Preview AI classification for an issue without creating it."""
+    classification = await classify_issue(preview.title, preview.body)
+    return ClassificationResult(
+        issue_type=classification.issue_type.value,
+        priority=classification.priority.value,
+        confidence=classification.confidence,
+        reasoning=classification.reasoning,
+        similarity_hash=classification.similarity_hash,
+    )
 
 
 # Issues API
@@ -137,10 +177,10 @@ async def create_issue(
         labels=json.dumps(issue_data.get("labels", [])),
         assignees=json.dumps(issue_data.get("assignees", [])),
         author=issue_data.get("author"),
-        created_at=datetime.fromisoformat(issue_data["created_at"]) if issue_data.get("created_at") else datetime.utcnow(),
-        updated_at=datetime.fromisoformat(issue_data["updated_at"]) if issue_data.get("updated_at") else datetime.utcnow(),
+        created_at=datetime.fromisoformat(issue_data["created_at"]) if issue_data.get("created_at") else datetime.now(timezone.utc),
+        updated_at=datetime.fromisoformat(issue_data["updated_at"]) if issue_data.get("updated_at") else datetime.now(timezone.utc),
         classification_confidence=confidence,
-        classified_at=datetime.utcnow(),
+        classified_at=datetime.now(timezone.utc),
         similarity_hash=similarity_hash,
         priority_score=confidence,  # Use confidence as priority score proxy
     )
@@ -214,13 +254,13 @@ async def update_issue(issue_id: int, updates: dict, db: Session = Depends(get_d
         if not explicit_priority:
             issue.priority = classification.priority.value
         issue.classification_confidence = classification.confidence
-        issue.classified_at = datetime.utcnow()
+        issue.classified_at = datetime.now(timezone.utc)
         issue.similarity_hash = classification.similarity_hash
         issue.priority_score = classification.confidence
 
-    issue.updated_at = datetime.utcnow()
+    issue.updated_at = datetime.now(timezone.utc)
     if updates.get("status") in (IssueStatus.RESOLVED.value, IssueStatus.CLOSED.value) and not issue.closed_at:
-        issue.closed_at = datetime.utcnow()
+        issue.closed_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(issue)
@@ -323,7 +363,7 @@ async def create_usage_record(record: dict, db: Session = Depends(get_db)):
         cost_usd=record.get("cost_usd", cost),
         session_id=record.get("session_id"),
         user_id=record.get("user_id"),
-        timestamp=datetime.fromisoformat(record["timestamp"]) if record.get("timestamp") else datetime.utcnow(),
+        timestamp=datetime.fromisoformat(record["timestamp"]) if record.get("timestamp") else datetime.now(timezone.utc),
     )
 
     db.add(usage)
@@ -338,7 +378,7 @@ async def usage_summary(
     days: int = Query(30, ge=1, le=365),
     user_id: Optional[str] = Query(None)
 ):
-    since = datetime.utcnow() - timedelta(days=days)
+    since = datetime.now(timezone.utc) - timedelta(days=days)
     query = db.query(UsageRecord).filter(UsageRecord.timestamp >= since)
     if user_id:
         query = query.filter(UsageRecord.user_id == user_id)
@@ -489,7 +529,7 @@ async def update_profile(profile_id: int, updates: dict, db: Session = Depends(g
                 else:
                     setattr(profile, field, value)
 
-        profile.updated_at = datetime.utcnow()
+        profile.updated_at = datetime.now(timezone.utc)
         db.commit()
         db.refresh(profile)
         return profile.to_dict()
@@ -527,7 +567,7 @@ async def update_accessibility(updates: dict, db: Session = Depends(get_db)):
             if field in allowed:
                 setattr(a11y, field, value)
 
-        a11y.updated_at = datetime.utcnow()
+        a11y.updated_at = datetime.now(timezone.utc)
         db.commit()
         db.refresh(a11y)
         return a11y.to_dict()

@@ -122,3 +122,11 @@ export interface HealthResponse {
   version: string
   timestamp: string
 }
+
+export interface ClassificationResult {
+  issue_type: IssueType
+  priority: IssuePriority
+  confidence: number
+  reasoning: string
+  similarity_hash: string
+}

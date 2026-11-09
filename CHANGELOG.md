@@ -1,8 +1,17 @@
 # Changelog
 
-## 1.3.0 — work-in-progress checkpoint
+## 1.4.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
+
+## 1.3.0 — work-in-progress checkpoint
+
+### Fixed
+- Replaced all `datetime.utcnow()` calls with `datetime.now(timezone.utc)` for timezone-aware UTC timestamps (Python 3.12+ deprecation fix)
+- Fixed in `backend/app/api/__init__.py`: health_check, create_issue, update_issue, create_usage_record, usage_summary, update_profile, update_accessibility
+- Fixed in `backend/app/models/__init__.py`: Issue, UsageRecord, UserProfile, AccountProfile, AccessibilitySettings models (default/onupdate lambdas)
+- All 33 backend tests pass
+- All 5 frontend tests pass
 
 ## 1.2.0 — work-in-progress checkpoint
 

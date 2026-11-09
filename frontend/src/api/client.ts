@@ -79,6 +79,11 @@ class ApiClient {
     return response.data
   }
 
+  async previewClassification(title: string, body: string = '') {
+    const response = await this.client.post('/issues/classify', { title, body })
+    return response.data
+  }
+
   // Usage
   async getUsage(params?: {
     page?: number
