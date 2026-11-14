@@ -417,6 +417,10 @@ async def usage_summary(
 
 
 # User Profiles API
+ @router.get("/usage/export")
+ @router.get("/usage/export")
+ @router.get("/usage/export")
+ @router.get("/usage/export")
 @router.get("/profiles/me", response_model=dict)
 async def get_current_profile(db: Session = Depends(get_db)):
     # Demo mode: return or create demo user
@@ -572,4 +576,5 @@ async def update_accessibility(updates: dict, db: Session = Depends(get_db)):
         db.refresh(a11y)
         return a11y.to_dict()
 
-    raise HTTPException(status_code=401, detail="Authentication required")
+    raise HTTPException(status_code=401, detail="Authentication required")// New export endpoint
+// Added export endpoint
