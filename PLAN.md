@@ -39,13 +39,17 @@ Tests: `backend/tests/test_api.py`, `backend/tests/test_classifier.py`
 
 ### usage-analytics — Usage analytics dashboard with limit monitoring
 
-Status: planned
+Status: in_progress
 
 Acceptance:
 - Track API usage over time with persistent storage
 - Visual dashboard showing usage trends
 - Alert when approaching subscription limits
 - Export usage data as CSV/JSON
+
+Implementation: `backend/app/api/__init__.py - UsageRecord model, API routes for /usage, /usage/stats/summary`
+
+Tests: `backend/tests/test_api.py - TestUsageAPI (3 tests passing)`
 
 ### multi-account — Multi-account profile management
 

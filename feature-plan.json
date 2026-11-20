@@ -62,15 +62,19 @@
     {
       "id": "usage-analytics",
       "title": "Usage analytics dashboard with limit monitoring",
-      "status": "planned",
+      "status": "in_progress",
       "acceptance": [
         "Track API usage over time with persistent storage",
         "Visual dashboard showing usage trends",
         "Alert when approaching subscription limits",
         "Export usage data as CSV/JSON"
       ],
-      "implementation": [],
-      "tests": []
+      "implementation": [
+        "backend/app/api/__init__.py - UsageRecord model, API routes for /usage, /usage/stats/summary"
+      ],
+      "tests": [
+        "backend/tests/test_api.py - TestUsageAPI (3 tests passing)"
+      ]
     },
     {
       "id": "multi-account",
