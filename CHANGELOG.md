@@ -1,6 +1,20 @@
 # Changelog
 
+## 1.7.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.6.0 — work-in-progress checkpoint
+
+## 1.6.1 — work-in-progress checkpoint
+
+- Added usage export CSV endpoint (`GET /api/usage/export/csv`)
+- New `usage_export_csv` function in `backend/app/api/__init__.py`
+- Returns usage records as CSV with timestamp, model, tokens, cost, user_id, session_id
+- All 19 existing API tests pass
+- Usage analytics feature `in_progress` with persistent storage tracked
+
+
 
 Partial code published for continued development. Known issues: STATUS.md.
 

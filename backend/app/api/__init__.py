@@ -572,3 +572,44 @@ async def update_accessibility(updates: dict, db: Session = Depends(get_db)):
 
         raise HTTPException(status_code=401, detail="Authentication required")
 # Added export endpoint
+
+
+@router.get("/usage/export/csv", response_model=str)
+async def usage_export_csv(
+    db: Session = Depends(get_db),
+    days: int = Query(30, ge=1, le=365),
+    user_id: Optional[str] = Query(None)
+):
+    """Export usage data as CSV."""
+    import csv
+    import io
+    from datetime import timedelta, timezone
+    from sqlalchemy import func
+    from app.models import UsageRecord
+
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+    query = db.query(UsageRecord).filter(UsageRecord.timestamp >= since)
+
+    records = query.order_by(UsageRecord.timestamp.desc()).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["timestamp", "model", "input_tokens", "output_tokens", "total_tokens", "cost_usd", "user_id", "session_id"])
+    for r in records:
+        writer.writerow([
+            r.timestamp.isoformat() if r.timestamp else '',
+            r.model,
+            r.input_tokens,
+            r.output_tokens,
+            r.total_tokens,
+            r.cost_usd,
+            r.user_id or '',
+            r.session_id or '',
+        ])
+    csv_data = output.getvalue()
+    from fastapi.responses import StreamingResponse
+    return StreamingResponse(
+        iter([csv_data]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=usage_export.csv"}
+    )
