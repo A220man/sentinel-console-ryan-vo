@@ -613,3 +613,35 @@ async def usage_export_csv(
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=usage_export.csv"}
     )
+
+@router.get('/usage/export/json', response_model=dict)
+async def usage_export_json(
+    db: Session = Depends(get_db),
+    days: int = Query(30, ge=1, le=365),
+    user_id: Optional[str] = Query(None),
+):
+    """Export usage data as JSON."""
+    from datetime import timedelta, timezone
+    from sqlalchemy import func
+    from app.models import UsageRecord
+
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+    query = db.query(UsageRecord).filter(UsageRecord.timestamp >= since)
+
+    records = query.order_by(UsageRecord.timestamp.desc()).all()
+
+    import json
+    data = [
+        {
+            'timestamp': r.timestamp.isoformat() if r.timestamp else None,
+            'model': r.model,
+            'input_tokens': r.input_tokens,
+            'output_tokens': r.output_tokens,
+            'total_tokens': r.total_tokens,
+            'cost_usd': r.cost_usd,
+            'user_id': r.user_id,
+            'session_id': r.session_id,
+        }
+        for r in records
+    ]
+    return {'total': len(records), 'records': data}

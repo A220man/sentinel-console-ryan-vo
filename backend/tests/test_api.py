@@ -245,6 +245,34 @@ class TestUsageAPI:
         assert len(data["daily"]) >= 1
 
 
+    def test_export_usage_json(self, client):
+        """Export usage data as JSON."""
+        # Create some usage records
+        for i in range(3):
+            client.post("/api/usage", json={
+                "model": "gpt-4o" if i != 1 else "claude-3",
+                "input_tokens": 100 + i * 10,
+                "output_tokens": 50,
+                "user_id": "user-1",
+            })
+
+        response = client.get("/api/usage/export/json")
+        assert response.status_code == 200
+        data = response.json()
+        assert data['total'] == 3
+        assert len(data['records']) == 3
+        # Verify structure of first record
+        record = data['records'][0]
+        assert 'timestamp' in record
+        assert 'model' in record
+        assert 'input_tokens' in record
+        assert 'output_tokens' in record
+        assert 'total_tokens' in record
+        assert 'cost_usd' in record
+        assert 'user_id' in record
+        assert 'session_id' in record
+        assert data['records'][0]['model'] == 'gpt-4o'
+
 class TestProfilesAPI:
     def test_get_current_profile_demo(self, client):
         response = client.get("/api/profiles/me")
